@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Application Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1714;--surface:rgba(232,224,212,0.04);--surface2:rgba(232,224,212,0.07);
+  --border:rgba(232,224,212,0.12);--border2:rgba(232,224,212,0.2);
+  --text:#e8e0d4;--muted:rgba(232,224,212,0.45);--faint:rgba(232,224,212,0.25);
+  --orange:#F5824A;--orange-bg:rgba(245,130,74,0.1);--orange-border:rgba(245,130,74,0.25);
+  --green:#5DCAA5;--green-bg:rgba(93,202,165,0.1);--green-border:rgba(93,202,165,0.25);
+  --blue:#85B7EB;--blue-bg:rgba(133,183,235,0.1);--blue-border:rgba(133,183,235,0.25);
+  --red:#f09595;--red-bg:rgba(240,149,149,0.1);--red-border:rgba(240,149,149,0.25);
+  --radius:8px;--radius-lg:12px;
+}
+body{font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{max-width:960px;margin:0 auto;padding:2rem 1.5rem 6rem}
+
+/* HEADER */
+.header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.75rem;padding-bottom:1.5rem;border-bottom:0.5px solid var(--border);flex-wrap:wrap;gap:12px}
+.header h1{font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;letter-spacing:-0.3px;line-height:1.1}
+.header h1 em{color:var(--orange);font-style:italic}
+.header-sub{font-size:11px;color:var(--faint);margin-top:5px;font-family:'DM Mono',monospace;letter-spacing:.05em}
+.header-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* BUTTONS */
+.btn{font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:500;padding:8px 14px;border-radius:6px;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--orange);color:#fff}.btn-primary:hover{background:#e86f37}
+.btn-ghost{background:var(--surface2);color:var(--muted);border:0.5px solid var(--border)}.btn-ghost:hover{background:rgba(232,224,212,0.12);color:var(--text)}
+.btn-sm{font-size:11px;padding:5px 10px}
+.lang-btn{font-family:'DM Mono',monospace;font-size:12px;background:var(--orange-bg);border:0.5px solid var(--orange-border);color:var(--orange);border-radius:6px;padding:7px 12px;cursor:pointer;transition:all .15s;font-weight:500}.lang-btn:hover{background:rgba(245,130,74,0.18)}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center}
+.stat-num{font-family:'DM Serif Display',serif;font-size:22px;line-height:1}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em}
+.stat.s-w .stat-num{color:var(--orange)}.stat.s-p .stat-num{color:var(--green)}.stat.s-r .stat-num{color:var(--red)}
+
+/* SETTINGS BAR */
+.settings-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;display:none}
+.settings-bar.open{display:block}
+.settings-bar label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px}
+.settings-bar input{width:100%;background:rgba(232,224,212,0.06);border:0.5px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:8px 10px;outline:none}
+.settings-bar input:focus{border-color:var(--orange-border)}
+.settings-note{font-size:11px;color:var(--faint);margin-top:6px}
+
+/* ADD FORM */
+.add-form{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem;display:none}
+.add-form.open{display:block}
+.form-section-title{font-size:11px;font-family:'DM Mono',monospace;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.75rem;display:flex;align-items:center;gap:8px}
+.form-section-title::after{content:'';flex:1;height:.5px;background:var(--border)}
+.jd-paste-area{position:relative;margin-bottom:1rem}
+.jd-paste-area textarea{width:100%;background:rgba(232,224,212,0.04);border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;padding:10px 12px;outline:none;resize:vertical;min-height:100px;transition:border-color .15s}
+.jd-paste-area textarea:focus{border-color:var(--orange-border)}
+.ai-extract-btn{margin-top:8px;width:100%}
+.ai-loading{display:none;align-items:center;gap:8px;font-size:12px;color:var(--orange);font-family:'DM Mono',monospace;margin-top:8px}
+.ai-loading.show{display:flex}
+.spinner{width:14px;height:14px;border:1.5px solid var(--orange-border);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:6px;position:relative}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em}
+.form-group input,.form-group textarea,.form-group select{background:rgba(232,224,212,0.06);border:0.5px solid var(--border);border-radius:6px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;padding:8px 10px;outline:none;transition:border-color .15s;width:100%}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--orange-border)}
+.form-group select option{background:#2a2520}
+.form-group textarea{resize:vertical;min-height:70px}
+
+/* AUTOCOMPLETE */
+.autocomplete-wrap{position:relative}
+.autocomplete-dropdown{position:absolute;top:100%;left:0;right:0;background:#252220;border:0.5px solid var(--border2);border-radius:6px;z-index:100;max-height:160px;overflow-y:auto;display:none;margin-top:2px}
+.autocomplete-dropdown.show{display:block}
+.ac-item{padding:8px 10px;font-size:13px;cursor:pointer;color:var(--text);transition:background .1s}
+.ac-item:hover{background:var(--surface2)}
+.ac-item mark{background:transparent;color:var(--orange);font-weight:600}
+
+/* REMOTE PILLS */
+.remote-pills{display:flex;gap:6px;flex-wrap:wrap}
+.remote-pill{font-size:11px;font-family:'DM Mono',monospace;padding:5px 10px;border-radius:5px;cursor:pointer;border:0.5px solid var(--border);background:transparent;color:var(--muted);transition:all .12s}
+.remote-pill:hover{background:var(--surface2);color:var(--text)}
+.remote-pill.active{border-color:var(--orange-border);color:var(--orange);background:var(--orange-bg)}
+
+/* PDF AREA */
+.pdf-upload-area{border:0.5px dashed var(--orange-border);border-radius:6px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;background:rgba(245,130,74,0.03)}
+.pdf-upload-area:hover{background:rgba(245,130,74,0.07)}
+.pdf-upload-label{font-size:12px;color:var(--faint);pointer-events:none}
+.pdf-upload-label span{color:var(--orange)}
+.resume-select-group{display:flex;gap:8px;align-items:stretch}
+.resume-select-group select{flex:1}
+.resume-or{font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;display:flex;align-items:center;padding:0 4px}
+
+/* DATE PAIR */
+.date-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* FORM ACTIONS */
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;padding-top:12px;border-top:.5px solid var(--border)}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.filter-btn{font-size:11px;font-family:'DM Mono',monospace;padding:5px 10px;border-radius:5px;cursor:pointer;border:0.5px solid var(--border);background:transparent;color:var(--faint);transition:all .12s}
+.filter-btn:hover,.filter-btn.active{background:var(--surface2);color:var(--text);border-color:var(--border2)}
+.search-wrap{flex:1;min-width:160px;position:relative}
+.search-wrap input{width:100%;background:var(--surface);border:0.5px solid var(--border);border-radius:6px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:12px;padding:6px 10px 6px 30px;outline:none;transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--orange-border)}
+.search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--faint);pointer-events:none}
+.toolbar-right{margin-left:auto;display:flex;gap:8px}
+
+/* ENTRIES */
+.entries{display:flex;flex-direction:column;gap:8px}
+
+/* ENTRY CARD */
+.entry-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color .15s}
+.entry-card:hover{border-color:var(--border2)}
+.entry-card.st-waiting{border-left:2.5px solid var(--orange)}
+.entry-card.st-replied{border-left:2.5px solid var(--blue)}
+.entry-card.st-interview{border-left:2.5px solid var(--green)}
+.entry-card.st-rejected{border-left:2.5px solid var(--red)}
+
+.entry-header{display:flex;align-items:center;padding:.9rem 1.1rem;cursor:pointer;gap:12px;user-select:none}
+.entry-toggle{font-size:12px;color:var(--faint);transition:transform .2s;flex-shrink:0}
+.entry-toggle.open{transform:rotate(90deg)}
+.entry-main{flex:1;min-width:0}
+.entry-company{font-size:14px;font-weight:600;color:var(--text)}
+.entry-role{font-size:12px;color:var(--muted);margin-top:1px}
+.entry-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center}
+.chip{font-size:10px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.chip-remote{background:var(--green-bg);color:var(--green);border:0.5px solid var(--green-border)}
+.chip-hybrid{background:var(--blue-bg);color:var(--blue);border:0.5px solid var(--blue-border)}
+.chip-onsite{background:rgba(245,130,74,0.1);color:var(--orange);border:0.5px solid var(--orange-border)}
+.chip-date{background:var(--surface2);color:var(--faint);border:0.5px solid var(--border)}
+.entry-status-wrap{flex-shrink:0}
+.status-select{font-size:11px;font-family:'DM Mono',monospace;padding:4px 8px;border-radius:5px;cursor:pointer;border:0.5px solid var(--border);background:var(--surface2);color:var(--text);outline:none;transition:all .12s}
+.status-select option{background:#2a2520}
+.status-select.st-waiting{border-color:var(--orange-border);color:var(--orange);background:var(--orange-bg)}
+.status-select.st-replied{border-color:var(--blue-border);color:var(--blue);background:var(--blue-bg)}
+.status-select.st-interview{border-color:var(--green-border);color:var(--green);background:var(--green-bg)}
+.status-select.st-rejected{border-color:var(--red-border);color:var(--red);background:var(--red-bg)}
+
+.entry-body{padding:0 1.1rem 1rem;border-top:.5px solid var(--border);display:none}
+.entry-body.open{display:block}
+.entry-body-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:.9rem}
+.eb-field label{font-size:10px;color:var(--faint);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:3px}
+.eb-field p{font-size:12px;color:var(--text);line-height:1.5}
+.eb-field a{color:var(--orange);font-size:12px;text-decoration:none;word-break:break-all}.eb-field a:hover{text-decoration:underline}
+.eb-field.full{grid-column:1/-1}
+.summary-text{font-size:12px;color:var(--muted);line-height:1.7;background:rgba(232,224,212,0.03);border:0.5px solid var(--border);border-radius:6px;padding:10px 12px;white-space:pre-wrap}
+.interview-input{width:100%;background:rgba(93,202,165,0.06);border:0.5px solid var(--green-border);border-radius:5px;color:var(--green);font-family:'DM Mono',monospace;font-size:11px;padding:6px 8px;outline:none;margin-top:4px}
+.interview-input::placeholder{color:rgba(93,202,165,0.3)}
+.pdf-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:'DM Mono',monospace;color:rgba(245,130,74,.7);background:rgba(245,130,74,.08);border:0.5px solid rgba(245,130,74,.2);border-radius:4px;padding:3px 8px;cursor:pointer;transition:all .12s;text-decoration:none}
+.pdf-chip:hover{background:rgba(245,130,74,.15)}
+.entry-footer{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:.5px solid var(--border)}
+.del-btn{margin-left:auto;font-size:11px;background:transparent;border:0.5px solid var(--red-border);color:var(--red);cursor:pointer;padding:4px 10px;border-radius:5px;font-family:'DM Mono',monospace;opacity:.5;transition:opacity .12s}
+.del-btn:hover{opacity:1}
+
+/* CONFIRM OVERLAY */
+.confirm-overlay{position:fixed;inset:0;background:rgba(10,8,6,.8);z-index:1000;display:none;align-items:center;justify-content:center}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:#252220;border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:1.5rem 2rem;max-width:360px;width:90%;text-align:center}
+.confirm-box h3{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:.5rem}
+.confirm-box p{font-size:13px;color:var(--muted);margin-bottom:1.25rem;line-height:1.5}
+.confirm-actions{display:flex;gap:8px;justify-content:center}
+
+/* EMPTY */
+.empty{text-align:center;padding:4rem 2rem;color:var(--faint)}
+.empty .big{font-family:'DM Serif Display',serif;font-size:44px;opacity:.3}
+.empty p{font-size:13px;margin-top:.75rem}
+
+/* IMPORT SECTION */
+.import-bar{background:var(--blue-bg);border:0.5px solid var(--blue-border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;display:none;text-align:center}
+.import-bar.open{display:block}
+.import-bar p{font-size:12px;color:var(--muted);margin-bottom:8px}
+
+@media(max-width:600px){
+  .form-grid,.entry-body-grid,.date-pair,.stats{grid-template-columns:1fr}
+  .form-group.full{grid-column:1}
+  .eb-field.full{grid-column:1}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <h1 id="h-title">求职 <em>档案</em> 追踪</h1>
+      <div class="header-sub" id="h-sub">Job Application Tracker</div>
+    </div>
+    <div class="header-actions">
+      <button class="lang-btn" onclick="toggleLang()" id="lang-btn">EN</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleSettings()" id="btn-settings">⚙ API Key</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleImport()" id="btn-import">⬆ <span data-t="import">导入</span></button>
+      <button class="btn btn-ghost btn-sm" onclick="exportPDF()" id="btn-export">⬇ <span data-t="exportPdf">导出 PDF</span></button>
+      <button class="btn btn-ghost btn-sm" onclick="exportJSON()">JSON</button>
+      <button class="btn btn-primary" onclick="toggleForm()" id="btn-add">＋ <span data-t="newEntry">新增投递</span></button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="st-total">0</div><div class="stat-lbl" data-t="total">Total</div></div>
+    <div class="stat s-w"><div class="stat-num" id="st-waiting">0</div><div class="stat-lbl" data-t="waiting">等待中</div></div>
+    <div class="stat s-p"><div class="stat-num" id="st-interview">0</div><div class="stat-lbl" data-t="interview">面试中</div></div>
+    <div class="stat s-r"><div class="stat-num" id="st-rejected">0</div><div class="stat-lbl" data-t="rejected">已拒绝</div></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="settings-bar" id="settings-bar">
+    <label data-t="apiKeyLabel">Anthropic API Key</label>
+    <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." oninput="saveApiKey()">
+    <div class="settings-note" data-t="apiKeyNote">Key 保存在本地浏览器，不会上传到任何服务器</div>
+  </div>
+
+  <!-- IMPORT -->
+  <div class="import-bar" id="import-bar">
+    <p data-t="importDesc">上传 JSON 备份文件以恢复记录</p>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()" data-t="importChoose">选择文件</button>
+  </div>
+
+  <!-- ADD FORM -->
+  <div class="add-form" id="add-form">
+
+    <!-- JD PASTE -->
+    <div class="form-section-title" data-t="jdSection">粘贴 LinkedIn JD 原文</div>
+    <div class="jd-paste-area">
+      <textarea id="jd-raw" data-t-placeholder="jdPlaceholder" placeholder="将 LinkedIn 岗位描述全文粘贴到此处，AI 将自动提取关键信息..."></textarea>
+      <div class="ai-loading" id="ai-loading"><div class="spinner"></div><span data-t="aiLoading">AI 正在提取信息...</span></div>
+      <button class="btn btn-ghost ai-extract-btn" onclick="extractWithAI()" id="extract-btn">✦ <span data-t="extractBtn">AI 自动提取信息</span></button>
+    </div>
+
+    <!-- FIELDS -->
+    <div class="form-section-title" data-t="detailSection">岗位详情</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label data-t="lblCompany">公司名称 *</label>
+        <input type="text" id="f-company" placeholder="e.g. TikTok">
+      </div>
+      <div class="form-group autocomplete-wrap">
+        <label data-t="lblRole">岗位名称 *</label>
+        <input type="text" id="f-role" placeholder="e.g. UI/UX Designer" oninput="acInput()" onfocus="acFocus()" onblur="acBlur()">
+        <div class="autocomplete-dropdown" id="ac-dropdown"></div>
+      </div>
+      <div class="form-group full">
+        <label data-t="lblLink">职位链接</label>
+        <input type="url" id="f-link" placeholder="https://linkedin.com/jobs/...">
+      </div>
+      <div class="form-group">
+        <label data-t="lblLocation">工作地点</label>
+        <input type="text" id="f-location" placeholder="e.g. New York, NY">
+      </div>
+      <div class="form-group">
+        <label data-t="lblRemote">工作形式</label>
+        <div class="remote-pills">
+          <button class="remote-pill active" data-val="remote" onclick="selectRemote(this)" data-t="remote">Remote</button>
+          <button class="remote-pill" data-val="hybrid" onclick="selectRemote(this)" data-t="hybrid">Hybrid</button>
+          <button class="remote-pill" data-val="onsite" onclick="selectRemote(this)" data-t="onsite">On-site</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-t="lblApplied">投递日期</label>
+        <input type="date" id="f-applied">
+      </div>
+      <div class="form-group">
+        <label data-t="lblOpenDate">开放招募日期</label>
+        <div class="date-pair">
+          <input type="date" id="f-open-start" title="开始日期">
+          <input type="date" id="f-open-end" title="截止日期">
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-t="lblStatus">状态</label>
+        <select id="f-status">
+          <option value="waiting" data-t="stWaiting">⏳ 等待回复</option>
+          <option value="replied" data-t="stReplied">📩 已收到回信</option>
+          <option value="interview" data-t="stInterview">🎯 面试进行中</option>
+          <option value="rejected" data-t="stRejected">✗ 已拒绝</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label data-t="lblSummary">JD 摘要 / 岗位要求</label>
+        <textarea id="f-summary" rows="4" data-t-placeholder="summaryPlaceholder" placeholder="AI 提取后自动填入，或手动输入岗位要求摘要..."></textarea>
+      </div>
+      <div class="form-group full">
+        <label data-t="lblResume">简历 PDF</label>
+        <div class="resume-select-group">
+          <select id="resume-select" onchange="onResumeSelect()">
+            <option value="">— <span data-t="resumeNew">上传新简历</span> —</option>
+          </select>
+          <span class="resume-or" data-t="orUpload">或</span>
+          <div class="pdf-upload-area" onclick="document.getElementById('f-pdf').click()" style="flex:1;padding:8px 12px">
+            <div class="pdf-upload-label" id="pdf-label-text"><span data-t="uploadPdf">上传 PDF</span></div>
+            <input type="file" id="f-pdf" accept=".pdf" style="display:none" onchange="handlePdfUpload(event)">
+          </div>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label data-t="lblNotes">备注</label>
+        <textarea id="f-notes" rows="2" data-t-placeholder="notesPlaceholder" placeholder="其他备注..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeForm()" data-t="cancel">取消</button>
+      <button class="btn btn-primary" onclick="addEntry()" data-t="save">保存记录</button>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search-input" oninput="render()" data-t-placeholder="searchPlaceholder" placeholder="搜索公司、岗位、摘要...">
+    </div>
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)" data-t="filterAll">全部</button>
+    <button class="filter-btn" data-filter="remote" onclick="setFilter('remote',this)" data-t="filterRemote">Remote</button>
+    <button class="filter-btn" data-filter="waiting" onclick="setFilter('waiting',this)" data-t="filterWaiting">等待</button>
+    <button class="filter-btn" data-filter="interview" onclick="setFilter('interview',this)" data-t="filterInterview">面试</button>
+    <button class="filter-btn" data-filter="rejected" onclick="setFilter('rejected',this)" data-t="filterRejected">拒绝</button>
+  </div>
+
+  <!-- ENTRIES -->
+  <div class="entries" id="entries-list"></div>
+</div>
+
+<!-- CONFIRM OVERLAY -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <h3 data-t="confirmTitle">确认删除</h3>
+    <p data-t="confirmMsg">此操作不可撤销，确定要删除这条申请记录吗？</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()" data-t="confirmCancel">取消</button>
+      <button class="btn" style="background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border)" onclick="confirmDelete()" data-t="confirmOk">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ─── TRANSLATIONS ───────────────────────────────────────────────────
+const LANG = {
+  zh:{
+    'h-title':'求职 <em>档案</em> 追踪','h-sub':'Job Application Tracker',
+    langBtn:'EN',
+    import:'导入',exportPdf:'导出 PDF',newEntry:'新增投递',
+    total:'Total',waiting:'等待中',interview:'面试中',rejected:'已拒绝',
+    apiKeyLabel:'Anthropic API Key',apiKeyNote:'Key 保存在本地浏览器，不会上传到任何服务器',
+    importDesc:'上传 JSON 备份文件以恢复记录',importChoose:'选择文件',
+    jdSection:'粘贴 LinkedIn JD 原文',
+    jdPlaceholder:'将 LinkedIn 岗位描述全文粘贴到此处，AI 将自动提取关键信息...',
+    aiLoading:'AI 正在提取信息...',extractBtn:'AI 自动提取信息',
+    detailSection:'岗位详情',
+    lblCompany:'公司名称 *',lblRole:'岗位名称 *',lblLink:'职位链接',
+    lblLocation:'工作地点',lblRemote:'工作形式',
+    lblApplied:'投递日期',lblOpenDate:'招募时间（开始 → 截止）',
+    lblStatus:'状态',lblSummary:'JD 摘要 / 岗位要求',lblResume:'简历 PDF',lblNotes:'备注',
+    remote:'Remote',hybrid:'Hybrid',onsite:'On-site',
+    stWaiting:'⏳ 等待回复',stReplied:'📩 已收到回信',stInterview:'🎯 面试进行中',stRejected:'✗ 已拒绝',
+    resumeNew:'上传新简历',orUpload:'或',uploadPdf:'上传 PDF',
+    summaryPlaceholder:'AI 提取后自动填入，或手动输入岗位要求摘要...',
+    notesPlaceholder:'其他备注...',searchPlaceholder:'搜索公司、岗位、摘要...',
+    cancel:'取消',save:'保存记录',
+    filterAll:'全部',filterRemote:'Remote',filterWaiting:'等待',filterInterview:'面试',filterRejected:'拒绝',
+    confirmTitle:'确认删除',confirmMsg:'此操作不可撤销，确定要删除这条申请记录吗？',
+    confirmCancel:'取消',confirmOk:'确认删除',
+    noPdf:'无简历附件',noSummary:'暂无摘要',
+    statusLabels:{waiting:'⏳ 等待回复',replied:'📩 已回信',interview:'🎯 面试中',rejected:'✗ 已拒绝'},
+    dateLabel:'投递',openLabel:'招募期',locationLabel:'地点',
+    summaryLabel:'JD 摘要',notesLabel:'备注',resumeLabel:'简历',interviewLinkLabel:'面试链接',
+    interviewPlaceholder:'填写面试/会议链接...',
+    alertFields:'请填写公司名称和岗位名称',
+    alertApiKey:'请先在设置中填写 Anthropic API Key',
+    alertJd:'请先粘贴 JD 原文',
+    importSuccess:'导入成功！',importFail:'文件格式错误，请使用本系统导出的 JSON 备份',
+    exportFileName:'求职记录_',
+  },
+  en:{
+    'h-title':'Job <em>Application</em> Tracker','h-sub':'Application Record System',
+    langBtn:'中文',
+    import:'Import',exportPdf:'Export PDF',newEntry:'+ New Entry',
+    total:'Total',waiting:'Waiting',interview:'Interview',rejected:'Rejected',
+    apiKeyLabel:'Anthropic API Key',apiKeyNote:'Saved locally in your browser — never sent to any server',
+    importDesc:'Upload a JSON backup file to restore records',importChoose:'Choose file',
+    jdSection:'Paste LinkedIn JD Text',
+    jdPlaceholder:'Paste the full LinkedIn job description here — AI will extract key details automatically...',
+    aiLoading:'AI extracting info...',extractBtn:'AI Auto-Extract',
+    detailSection:'Job Details',
+    lblCompany:'Company *',lblRole:'Role / Position *',lblLink:'Job URL',
+    lblLocation:'Location',lblRemote:'Work Type',
+    lblApplied:'Applied Date',lblOpenDate:'Open Period (Start → End)',
+    lblStatus:'Status',lblSummary:'JD Summary / Requirements',lblResume:'Resume PDF',lblNotes:'Notes',
+    remote:'Remote',hybrid:'Hybrid',onsite:'On-site',
+    stWaiting:'⏳ Waiting',stReplied:'📩 Replied',stInterview:'🎯 Interview',stRejected:'✗ Rejected',
+    resumeNew:'Upload new resume',orUpload:'or',uploadPdf:'Upload PDF',
+    summaryPlaceholder:'Auto-filled by AI, or type job requirements summary manually...',
+    notesPlaceholder:'Additional notes...',searchPlaceholder:'Search company, role, summary...',
+    cancel:'Cancel',save:'Save Entry',
+    filterAll:'All',filterRemote:'Remote',filterWaiting:'Waiting',filterInterview:'Interview',filterRejected:'Rejected',
+    confirmTitle:'Confirm Delete',confirmMsg:'This cannot be undone. Are you sure you want to delete this entry?',
+    confirmCancel:'Cancel',confirmOk:'Delete',
+    noPdf:'No resume attached',noSummary:'No summary',
+    statusLabels:{waiting:'⏳ Waiting',replied:'📩 Replied',interview:'🎯 Interview',rejected:'✗ Rejected'},
+    dateLabel:'Applied',openLabel:'Open',locationLabel:'Location',
+    summaryLabel:'JD Summary',notesLabel:'Notes',resumeLabel:'Resume',interviewLinkLabel:'Interview Link',
+    interviewPlaceholder:'Add interview / meeting link...',
+    alertFields:'Please fill in company name and role',
+    alertApiKey:'Please add your Anthropic API Key in Settings first',
+    alertJd:'Please paste the JD text first',
+    importSuccess:'Import successful!',importFail:'Invalid format. Please use a JSON backup from this app.',
+    exportFileName:'job_applications_',
+  }
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────
+let lang = localStorage.getItem('jt_lang')||'zh';
+let entries = JSON.parse(localStorage.getItem('jt_entries')||'[]');
+let resumes = JSON.parse(localStorage.getItem('jt_resumes')||'[]'); // [{name,base64}]
+let currentFilter = 'all';
+let pendingPdf = null; // {name, base64}
+let selectedRemote = 'remote';
+let pendingDeleteId = null;
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+function init(){
+  document.getElementById('api-key-input').value = localStorage.getItem('jt_apikey')||'';
+  document.getElementById('f-applied').value = new Date().toISOString().slice(0,10);
+  applyLang();
+  buildResumeSelect();
+  render();
+  updateStats();
+}
+
+// ─── LANG ─────────────────────────────────────────────────────────────
+function toggleLang(){ lang = lang==='zh'?'en':'zh'; localStorage.setItem('jt_lang',lang); applyLang(); render(); updateStats(); }
+
+function t(k){ return LANG[lang][k]||k; }
+
+function applyLang(){
+  const L = LANG[lang];
+  document.getElementById('h-title').innerHTML = L['h-title'];
+  document.getElementById('h-sub').textContent = L['h-sub'];
+  document.getElementById('lang-btn').textContent = L.langBtn;
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const k = el.dataset.t;
+    if(L[k]) el.textContent = L[k];
+  });
+  document.querySelectorAll('[data-t-placeholder]').forEach(el=>{
+    const k = el.dataset.tPlaceholder;
+    if(L[k]) el.placeholder = L[k];
+  });
+  // status select options
+  const sel = document.getElementById('f-status');
+  if(sel){
+    const cur = sel.value;
+    sel.innerHTML = `
+      <option value="waiting">${L.stWaiting}</option>
+      <option value="replied">${L.stReplied}</option>
+      <option value="interview">${L.stInterview}</option>
+      <option value="rejected">${L.stRejected}</option>`;
+    sel.value = cur||'waiting';
+  }
+}
+
+// ─── SETTINGS / API KEY ───────────────────────────────────────────────
+function toggleSettings(){ document.getElementById('settings-bar').classList.toggle('open'); }
+function saveApiKey(){ localStorage.setItem('jt_apikey', document.getElementById('api-key-input').value.trim()); }
+
+// ─── IMPORT / EXPORT ─────────────────────────────────────────────────
+function toggleImport(){ document.getElementById('import-bar').classList.toggle('open'); }
+
+function handleImport(e){
+  const file = e.target.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(data.entries && Array.isArray(data.entries)){
+        if(confirm('Import '+data.entries.length+' entries?')){
+          entries = data.entries;
+          resumes = data.resumes||[];
+          save();
+          buildResumeSelect();
+          document.getElementById('import-bar').classList.remove('open');
+          alert(t('importSuccess'));
+        }
+      } else { alert(t('importFail')); }
+    } catch(err){ alert(t('importFail')); }
+  };
+  r.readAsText(file);
+}
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify({entries,resumes},null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = t('exportFileName')+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+
+function exportPDF(){
+  if(typeof window.jspdf==='undefined'){ alert(t('pdfLoading')||'PDF lib loading...'); return; }
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'p',unit:'mm',format:'a4'});
+  const W=210, M=16; let y=18;
+  doc.setFillColor(26,23,20); doc.rect(0,0,W,297,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(232,224,212);
+  doc.text(lang==='zh'?'求职投递记录':'Job Application Record',M,y); y+=6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(120,110,100);
+  doc.text('Exported '+new Date().toLocaleDateString()+' · '+entries.length+' entries',M,y); y+=4;
+  doc.setDrawColor(50,45,40); doc.line(M,y,W-M,y); y+=6;
+  const SC={waiting:[245,130,74],replied:[133,183,235],interview:[93,202,165],rejected:[240,149,149]};
+  const SL=lang==='zh'?{waiting:'等待',replied:'已回信',interview:'面试中',rejected:'已拒绝'}:{waiting:'WAITING',replied:'REPLIED',interview:'INTERVIEW',rejected:'REJECTED'};
+  entries.forEach(e=>{
+    if(y>260){doc.addPage();doc.setFillColor(26,23,20);doc.rect(0,0,W,297,'F');y=16;}
+    const c=SC[e.status]||[180,170,160];
+    doc.setFillColor(c[0],c[1],c[2]); doc.rect(M,y,2,18,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(232,224,212);
+    doc.text(e.company,M+5,y+6);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(160,148,135);
+    doc.text(e.role,M+5,y+11);
+    doc.setFontSize(8); doc.setTextColor(120,110,100);
+    const meta=[];
+    if(e.location) meta.push(e.location);
+    if(e.remote) meta.push(e.remote);
+    if(e.applied) meta.push((lang==='zh'?'投递: ':'Applied: ')+e.applied);
+    if(meta.length) doc.text(meta.join(' · '),M+5,y+16);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(c[0],c[1],c[2]);
+    doc.text(SL[e.status]||e.status,W-M-22,y+6);
+    y+=20;
+    if(e.summary){
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(140,130,118);
+      const lines=doc.splitTextToSize(e.summary,W-M*2-8);
+      const show=lines.slice(0,4);
+      doc.text(show,M+5,y);
+      y+=show.length*3.8+2;
+    }
+    if(e.interviewLink){doc.setTextColor(93,202,165);doc.text('Interview: '+e.interviewLink,M+5,y);y+=5;}
+    y+=2; doc.setDrawColor(40,36,32); doc.line(M,y,W-M,y); y+=5;
+  });
+  doc.save(t('exportFileName')+new Date().toISOString().slice(0,10)+'.pdf');
+}
+
+// ─── FORM ─────────────────────────────────────────────────────────────
+function toggleForm(){
+  const f=document.getElementById('add-form');
+  const isOpen = f.classList.contains('open');
+  if(isOpen){ closeForm(); } else { f.classList.add('open'); }
+}
+
+function closeForm(){
+  document.getElementById('add-form').classList.remove('open');
+  clearForm();
+}
+
+function clearForm(){
+  ['f-company','f-role','f-link','f-location','f-notes','f-summary','jd-raw'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('f-applied').value = new Date().toISOString().slice(0,10);
+  document.getElementById('f-open-start').value='';
+  document.getElementById('f-open-end').value='';
+  document.getElementById('f-status').value='waiting';
+  document.getElementById('pdf-label-text').innerHTML='<span data-t="uploadPdf">上传 PDF</span>';
+  document.getElementById('resume-select').value='';
+  pendingPdf=null;
+  selectRemote(document.querySelector('.remote-pill[data-val="remote"]'));
+}
+
+// ─── AI EXTRACT ───────────────────────────────────────────────────────
+async function extractWithAI(){
+  const raw = document.getElementById('jd-raw').value.trim();
+  if(!raw){ alert(t('alertJd')); return; }
+  const key = localStorage.getItem('jt_apikey')||'';
+  if(!key){ alert(t('alertApiKey')); toggleSettings(); return; }
+
+  const loading = document.getElementById('ai-loading');
+  const btn = document.getElementById('extract-btn');
+  loading.classList.add('show'); btn.disabled=true;
+
+  const prompt = `You are a job application data extractor. From the following LinkedIn job description, extract these fields and return ONLY valid JSON (no markdown, no extra text):
+{
+  "company": "company name",
+  "role": "job title",
+  "location": "city, state/country",
+  "remote": "remote" | "hybrid" | "onsite",
+  "open_start": "YYYY-MM-DD or empty string",
+  "open_end": "YYYY-MM-DD or empty string",
+  "summary": "3-5 sentence summary of key requirements and responsibilities in the same language as the JD"
+}
+
+JD TEXT:
+${raw.slice(0,4000)}`;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})
+    });
+    const data = await res.json();
+    if(data.error){ throw new Error(data.error.message); }
+    const text = data.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(text);
+    if(parsed.company) document.getElementById('f-company').value=parsed.company;
+    if(parsed.role) document.getElementById('f-role').value=parsed.role;
+    if(parsed.location) document.getElementById('f-location').value=parsed.location;
+    if(parsed.remote){
+      const pill = document.querySelector(`.remote-pill[data-val="${parsed.remote}"]`);
+      if(pill) selectRemote(pill);
+    }
+    if(parsed.open_start) document.getElementById('f-open-start').value=parsed.open_start;
+    if(parsed.open_end) document.getElementById('f-open-end').value=parsed.open_end;
+    if(parsed.summary) document.getElementById('f-summary').value=parsed.summary;
+  } catch(err){
+    alert('AI extraction failed: '+err.message);
+  } finally {
+    loading.classList.remove('show'); btn.disabled=false;
+  }
+}
+
+// ─── REMOTE PILLS ─────────────────────────────────────────────────────
+function selectRemote(el){
+  if(!el) return;
+  document.querySelectorAll('.remote-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  selectedRemote = el.dataset.val;
+}
+
+// ─── AUTOCOMPLETE ─────────────────────────────────────────────────────
+let acTimeout;
+function acInput(){
+  clearTimeout(acTimeout);
+  acTimeout = setTimeout(showAc, 80);
+}
+function acFocus(){ showAc(); }
+function acBlur(){ setTimeout(()=>{ document.getElementById('ac-dropdown').classList.remove('show'); },150); }
+
+function showAc(){
+  const input = document.getElementById('f-role');
+  const val = input.value.trim().toLowerCase();
+  const dd = document.getElementById('ac-dropdown');
+  const roles = [...new Set(entries.map(e=>e.role).filter(Boolean))];
+  const filtered = val ? roles.filter(r=>r.toLowerCase().includes(val)) : roles;
+  if(!filtered.length){ dd.classList.remove('show'); return; }
+  dd.innerHTML = filtered.map(r=>{
+    const hi = val ? r.replace(new RegExp(`(${val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark>$1</mark>') : r;
+    return `<div class="ac-item" onmousedown="pickAc('${r.replace(/'/g,"\\'")}')">` + hi + '</div>';
+  }).join('');
+  dd.classList.add('show');
+}
+
+function pickAc(val){
+  document.getElementById('f-role').value=val;
+  document.getElementById('ac-dropdown').classList.remove('show');
+}
+
+// ─── PDF ──────────────────────────────────────────────────────────────
+function handlePdfUpload(e){
+  const file = e.target.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    pendingPdf = {name:file.name, base64:ev.target.result};
+    document.getElementById('pdf-label-text').innerHTML='✓ <span style="color:var(--orange)">'+file.name+'</span>';
+    document.getElementById('resume-select').value='';
+    // save to resumes library if not already there
+    if(!resumes.find(x=>x.name===file.name)){
+      resumes.push({name:file.name, base64:ev.target.result});
+      localStorage.setItem('jt_resumes',JSON.stringify(resumes));
+      buildResumeSelect();
+    }
+  };
+  r.readAsDataURL(file);
+}
+
+function buildResumeSelect(){
+  const sel = document.getElementById('resume-select');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— '+(lang==='zh'?'上传新简历':'Upload new resume')+' —</option>';
+  resumes.forEach((r,i)=>{
+    const opt = document.createElement('option');
+    opt.value=i; opt.textContent=r.name;
+    sel.appendChild(opt);
+  });
+  if(cur) sel.value=cur;
+}
+
+function onResumeSelect(){
+  const idx = document.getElementById('resume-select').value;
+  if(idx===''){ pendingPdf=null; document.getElementById('pdf-label-text').innerHTML='<span>上传 PDF</span>'; return; }
+  const resume = resumes[parseInt(idx)];
+  if(resume){ pendingPdf={name:resume.name, base64:resume.base64}; document.getElementById('pdf-label-text').innerHTML='✓ <span style="color:var(--orange)">'+resume.name+'</span>'; }
+}
+
+// ─── ADD ENTRY ────────────────────────────────────────────────────────
+function addEntry(){
+  const company = document.getElementById('f-company').value.trim();
+  const role = document.getElementById('f-role').value.trim();
+  if(!company||!role){ alert(t('alertFields')); return; }
+  const entry = {
+    id: Date.now(), company, role,
+    link: document.getElementById('f-link').value.trim(),
+    location: document.getElementById('f-location').value.trim(),
+    remote: selectedRemote,
+    applied: document.getElementById('f-applied').value,
+    openStart: document.getElementById('f-open-start').value,
+    openEnd: document.getElementById('f-open-end').value,
+    status: document.getElementById('f-status').value,
+    summary: document.getElementById('f-summary').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    pdfName: pendingPdf?.name||null,
+    pdfBase64: pendingPdf?.base64||null,
+    interviewLink:'',
+    expanded: false
+  };
+  entries.unshift(entry);
+  save();
+  closeForm();
+}
+
+// ─── SAVE ─────────────────────────────────────────────────────────────
+function save(){
+  localStorage.setItem('jt_entries',JSON.stringify(entries));
+  render(); updateStats();
+}
+
+function updateStats(){
+  document.getElementById('st-total').textContent=entries.length;
+  document.getElementById('st-waiting').textContent=entries.filter(e=>e.status==='waiting').length;
+  document.getElementById('st-interview').textContent=entries.filter(e=>e.status==='interview').length;
+  document.getElementById('st-rejected').textContent=entries.filter(e=>e.status==='rejected').length;
+}
+
+// ─── FILTER / SEARCH ──────────────────────────────────────────────────
+function setFilter(f, btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  render();
+}
+
+function filteredEntries(){
+  const q = (document.getElementById('search-input').value||'').toLowerCase();
+  return entries.filter(e=>{
+    const matchFilter =
+      currentFilter==='all' ||
+      (currentFilter==='remote' && e.remote==='remote') ||
+      currentFilter===e.status;
+    const matchQ = !q ||
+      e.company.toLowerCase().includes(q) ||
+      e.role.toLowerCase().includes(q) ||
+      (e.summary||'').toLowerCase().includes(q) ||
+      (e.location||'').toLowerCase().includes(q);
+    return matchFilter && matchQ;
+  });
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────
+function render(){
+  const list = document.getElementById('entries-list');
+  const L = LANG[lang];
+  const data = filteredEntries();
+  if(!data.length){
+    const msg = entries.length===0 ? (lang==='zh'?'还没有记录，点击「新增投递」开始追踪':'No entries yet — click "New Entry" to start') : (lang==='zh'?'没有符合条件的记录':'No matching entries');
+    list.innerHTML=`<div class="empty"><div class="big">◻</div><p>${msg}</p></div>`;
+    return;
+  }
+
+  list.innerHTML = data.map(e=>{
+    const remoteClass = {remote:'chip-remote',hybrid:'chip-hybrid',onsite:'chip-onsite'}[e.remote]||'chip-remote';
+    const remoteLabel = L[e.remote]||e.remote;
+    const dateStr = e.applied ? new Date(e.applied+'T12:00:00').toLocaleDateString(lang==='zh'?'zh-CN':'en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+    const openStr = [e.openStart,e.openEnd].filter(Boolean).join(' → ');
+    const statusClass = 'st-'+e.status;
+
+    const statusOpts = [
+      {v:'waiting',l:L.stWaiting},{v:'replied',l:L.stReplied},
+      {v:'interview',l:L.stInterview},{v:'rejected',l:L.stRejected}
+    ];
+
+    return `<div class="entry-card ${statusClass}" id="card-${e.id}">
+      <div class="entry-header" onclick="toggleCard(${e.id})">
+        <span class="entry-toggle ${e.expanded?'open':''}">▶</span>
+        <div class="entry-main">
+          <div class="entry-company">${esc(e.company)}</div>
+          <div class="entry-role">${esc(e.role)}</div>
+          <div class="entry-chips">
+            <span class="chip ${remoteClass}">${remoteLabel}</span>
+            ${e.location?`<span class="chip chip-date">📍 ${esc(e.location)}</span>`:''}
+            ${dateStr?`<span class="chip chip-date">📅 ${dateStr}</span>`:''}
+          </div>
+        </div>
+        <div class="entry-status-wrap" onclick="event.stopPropagation()">
+          <select class="status-select ${statusClass}" onchange="setStatus(${e.id},this.value)">
+            ${statusOpts.map(o=>`<option value="${o.v}"${e.status===o.v?' selected':''}>${o.l}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="entry-body ${e.expanded?'open':''}" id="body-${e.id}">
+        <div class="entry-body-grid">
+          ${e.link?`<div class="eb-field full"><label>${L.lblLink||'URL'}</label><a href="${esc(e.link)}" target="_blank">↗ ${esc(e.link.replace(/^https?:\/\/(www\.)?/,'').slice(0,60))}</a></div>`:''}
+          ${openStr?`<div class="eb-field"><label>${L.openLabel}</label><p>${esc(openStr)}</p></div>`:''}
+          ${e.notes?`<div class="eb-field"><label>${L.notesLabel}</label><p>${esc(e.notes)}</p></div>`:''}
+          ${e.summary?`<div class="eb-field full"><label>${L.summaryLabel}</label><div class="summary-text">${esc(e.summary)}</div></div>`:''}
+          <div class="eb-field full">
+            <label>${L.interviewLinkLabel}</label>
+            <input class="interview-input" placeholder="${L.interviewPlaceholder}" value="${esc(e.interviewLink||'')}" onchange="setInterviewLink(${e.id},this.value)" onblur="setInterviewLink(${e.id},this.value)">
+          </div>
+        </div>
+        <div class="entry-footer">
+          ${e.pdfBase64?`<a class="pdf-chip" onclick="openPdf(${e.id})">📄 ${esc(e.pdfName||'resume.pdf')}</a>`:`<span style="font-size:11px;color:var(--faint)">${L.noPdf}</span>`}
+          <button class="del-btn" onclick="startDelete(${e.id})">${lang==='zh'?'✕ 删除':'✕ Remove'}</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── CARD TOGGLE ──────────────────────────────────────────────────────
+function toggleCard(id){
+  const e = entries.find(x=>x.id===id);
+  if(!e) return;
+  e.expanded=!e.expanded;
+  localStorage.setItem('jt_entries',JSON.stringify(entries));
+  const toggle = document.querySelector(`#card-${id} .entry-toggle`);
+  const body = document.getElementById('body-'+id);
+  if(toggle) toggle.classList.toggle('open',e.expanded);
+  if(body) body.classList.toggle('open',e.expanded);
+}
+
+// ─── STATUS ───────────────────────────────────────────────────────────
+function setStatus(id,status){
+  const e=entries.find(x=>x.id===id);
+  if(!e) return;
+  e.status=status;
+  save();
+}
+
+function setInterviewLink(id,val){
+  const e=entries.find(x=>x.id===id);
+  if(e){ e.interviewLink=val; localStorage.setItem('jt_entries',JSON.stringify(entries)); }
+}
+
+// ─── DELETE (double confirm) ───────────────────────────────────────────
+function startDelete(id){
+  pendingDeleteId=id;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+function closeConfirm(){
+  pendingDeleteId=null;
+  document.getElementById('confirm-overlay').classList.remove('show');
+}
+function confirmDelete(){
+  if(pendingDeleteId===null) return;
+  entries=entries.filter(x=>x.id!==pendingDeleteId);
+  pendingDeleteId=null;
+  document.getElementById('confirm-overlay').classList.remove('show');
+  save();
+}
+
+// ─── PDF VIEW ─────────────────────────────────────────────────────────
+function openPdf(id){
+  const e=entries.find(x=>x.id===id);
+  if(e&&e.pdfBase64){ const w=window.open(); w.document.write('<iframe src="'+e.pdfBase64+'" width="100%" height="100%" style="border:none"></iframe>'); }
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────
+function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── KICK OFF ─────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
